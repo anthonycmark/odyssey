@@ -24,20 +24,21 @@ def norm(text: str) -> str:
     return " ".join((text or "").replace("\xa0", " ").split()).lower()
 
 
-def parse_event_showtimes(html: str, show_date: date) -> dict[str, dict]:
+def parse_odyssey_70mm_showtimes(html: str, show_date: date) -> dict[str, dict]:
     soup = BeautifulSoup(html, "html.parser")
     found: dict[str, dict] = {}
 
-    # AMC currently renders a distinct title for this special event. For each
-    # ticket link, walk upward only through compact containers and require that
-    # exact event title plus IMAX 70mm wording in the same container.
+    # AMC may list these either as "The Odyssey – IMAX 70mm Event" or simply
+    # "The Odyssey" under an IMAX 70MM format heading. For each ticket link,
+    # walk upward only through compact containers and require Odyssey + IMAX +
+    # 70mm in the same local container so unrelated movies are not matched.
     for a in soup.find_all("a", href=True):
         href = a.get("href", "")
         match = SEAT_LINK_RE.search(href)
         if not match:
             continue
 
-        event_text = None
+        odyssey_text = None
         node = a
         for _ in range(8):
             node = getattr(node, "parent", None)
@@ -47,16 +48,15 @@ def parse_event_showtimes(html: str, show_date: date) -> dict[str, dict]:
             if len(text) > 3000:
                 break
             low = norm(text)
-            if "the odyssey – imax 70mm event" in low or "the odyssey - imax 70mm event" in low:
-                if "imax 70mm" in low or ("imax" in low and "70mm" in low):
-                    event_text = text
-                    break
+            if "the odyssey" in low and "imax" in low and ("70mm" in low or "70 mm" in low):
+                odyssey_text = text
+                break
 
-        if not event_text:
+        if not odyssey_text:
             continue
 
         sid = match.group(1)
-        tm = TIME_RE.search(" ".join(a.stripped_strings)) or TIME_RE.search(event_text)
+        tm = TIME_RE.search(" ".join(a.stripped_strings)) or TIME_RE.search(odyssey_text)
         display_time = tm.group(1).upper().replace(" ", "") if tm else "time listed on AMC"
         ticket_url = urljoin(THEATRE_URL, href.split("?")[0])
         key = f"{show_date.isoformat()}|{sid}"
@@ -125,7 +125,7 @@ def main() -> int:
             r = session.get(url, timeout=25)
             r.raise_for_status()
             successful_pages += 1
-            current.update(parse_event_showtimes(r.text, d))
+            current.update(parse_odyssey_70mm_showtimes(r.text, d))
         except Exception as exc:
             print(f"{d}: check failed: {exc}")
 
