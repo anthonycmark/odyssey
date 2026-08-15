@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/watch.yml"
 
 permissions:
   contents: write
@@ -13,7 +16,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test-notification:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Send test phone notification
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          test -n "$NTFY_TOPIC"
+          curl -fsS \
+            -H "Title: Odyssey 70mm test" \
+            -H "Priority: high" \
+            -H "Tags: ticket" \
+            -d "Test successful — your Odyssey IMAX 70mm phone notifications are connected." \
+            "https://ntfy.sh/${NTFY_TOPIC}"
+
   check:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 4
 
