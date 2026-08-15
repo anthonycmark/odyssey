@@ -571,7 +571,7 @@
       "url": "https://www.amctheatres.com/showtimes/145681139"
     }
   },
-  "health_error": "",
+  "health_error": "AMC control page exposed only 0 generic showtime links; parsing may be broken",
   "initialized": true,
   "version": 2
 }
