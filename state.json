@@ -474,6 +474,30 @@
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681151"
     },
+    "2026-09-02|145681140": {
+      "date": "2026-09-02",
+      "showtime_id": "145681140",
+      "time": "10:00AM",
+      "url": "https://www.amctheatres.com/showtimes/145681140"
+    },
+    "2026-09-02|145681141": {
+      "date": "2026-09-02",
+      "showtime_id": "145681141",
+      "time": "2:00PM",
+      "url": "https://www.amctheatres.com/showtimes/145681141"
+    },
+    "2026-09-02|145681142": {
+      "date": "2026-09-02",
+      "showtime_id": "145681142",
+      "time": "6:00PM",
+      "url": "https://www.amctheatres.com/showtimes/145681142"
+    },
+    "2026-09-02|145681143": {
+      "date": "2026-09-02",
+      "showtime_id": "145681143",
+      "time": "10:00PM",
+      "url": "https://www.amctheatres.com/showtimes/145681143"
+    },
     "2026-09-03|145681134": {
       "date": "2026-09-03",
       "showtime_id": "145681134",
@@ -547,7 +571,7 @@
       "url": "https://www.amctheatres.com/showtimes/145681139"
     }
   },
-  "health_error": "AMC control page exposed only 0 generic showtime links; parsing may be broken",
+  "health_error": "",
   "initialized": true,
   "version": 2
 }
