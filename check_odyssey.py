@@ -24,8 +24,6 @@ THEATRE_URLS = [
 ]
 CANONICAL_THEATRE_URL = THEATRE_URLS[0]
 
-# AMC currently uses all of these forms in its purchase flow:
-# /showtimes/<id>, /showtimes/<id>/seats, /showtimes/<id>/tickets.
 SHOWTIME_LINK_RE = re.compile(
     r"/showtimes/(\d+)(?:(?:/(?:seats|tickets))?(?:[?#]|$))",
     re.I,
@@ -48,14 +46,26 @@ def save_state(state: dict) -> None:
     STATE_PATH.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def send_text_notification(title: str, message: str, priority: str = "high", click: str | None = None) -> None:
+def send_ticket_notification(items: list[dict]) -> None:
     if not NTFY_TOPIC:
         raise RuntimeError("GitHub secret NTFY_TOPIC is not configured")
 
-    headers = {"Title": title, "Priority": priority, "Tags": "ticket"}
-    if click:
-        headers["Click"] = click
+    items = sorted(items, key=lambda x: (x["date"], x["time"]))
+    lines = [f"{x['date']} — {x['time']}" for x in items[:12]]
+    if len(items) > 12:
+        lines.append(f"+ {len(items) - 12} more")
 
+    headers = {
+        "Title": "NEW Odyssey 70mm tickets",
+        "Priority": "urgent",
+        "Tags": "ticket",
+        "Click": items[0]["url"],
+    }
+    message = (
+        "New Odyssey IMAX 70mm ticket links appeared at Universal CityWalk:\n"
+        + "\n".join(lines)
+        + "\n\nTap to open AMC."
+    )
     response = requests.post(
         f"{NTFY_SERVER}/{NTFY_TOPIC}",
         data=message.encode("utf-8"),
@@ -65,24 +75,7 @@ def send_text_notification(title: str, message: str, priority: str = "high", cli
     response.raise_for_status()
 
 
-def send_ticket_notification(items: list[dict]) -> None:
-    items = sorted(items, key=lambda x: (x["date"], x["time"]))
-    lines = [f"{x['date']} — {x['time']}" for x in items[:12]]
-    if len(items) > 12:
-        lines.append(f"+ {len(items) - 12} more")
-
-    send_text_notification(
-        "NEW Odyssey 70mm tickets",
-        "New Odyssey IMAX 70mm ticket links appeared at Universal CityWalk:\n"
-        + "\n".join(lines)
-        + "\n\nTap to open AMC.",
-        priority="urgent",
-        click=items[0]["url"],
-    )
-
-
 def local_showtime_text(a) -> str:
-    """Smallest nearby text block that appears to describe this one showtime."""
     best = " ".join(a.stripped_strings)
     node = a
     for _ in range(4):
@@ -98,7 +91,6 @@ def local_showtime_text(a) -> str:
 
 
 def nearby_odyssey_70mm_text(a) -> str | None:
-    """Tie a clickable time to a nearby Odyssey + IMAX + 70mm movie/format block."""
     node = a
     for _ in range(12):
         node = getattr(node, "parent", None)
@@ -114,7 +106,6 @@ def nearby_odyssey_70mm_text(a) -> str | None:
 
 
 def page_has_odyssey_70mm_with_time(soup: BeautifulSoup) -> bool:
-    """Independent signal used to detect a parser break instead of silently missing tickets."""
     for text_node in soup.find_all(string=re.compile(r"the odyssey", re.I)):
         node = getattr(text_node, "parent", None)
         for _ in range(8):
@@ -154,7 +145,6 @@ def parse_listing_page(html: str, show_date) -> tuple[dict[str, dict], int, bool
             continue
 
         one_showtime_text = local_showtime_text(a)
-        # A Sold Out showtime should not count as purchasable even if AMC leaves a link.
         if "sold out" in norm(one_showtime_text):
             continue
 
@@ -173,7 +163,6 @@ def parse_listing_page(html: str, show_date) -> tuple[dict[str, dict], int, bool
 
 
 def fetch_listing(session: requests.Session, show_date) -> tuple[dict[str, dict], int, bool, str]:
-    """Use the canonical CityWalk URL, falling back to AMC's alternate slug on failure."""
     last_error = ""
     for base_url in THEATRE_URLS:
         url = f"{base_url}?date={show_date.isoformat()}&premium-offering=imax"
@@ -199,13 +188,10 @@ def main() -> int:
     previous_version = int(state.get("version", 0) or 0)
     initialized = bool(state.get("initialized", False))
     previous_active: dict[str, dict] = state.get("active") or state.get("seen") or {}
-    previous_health_error = state.get("health_error", "")
 
     local_today = datetime.now(PACIFIC).date()
     health_errors: list[str] = []
 
-    # CONTROL CHECK: tomorrow's unfiltered CityWalk page should have many normal
-    # clickable showtimes. This proves AMC isn't just returning an empty shell.
     control_date = local_today + timedelta(days=1)
     control_url = f"{CANONICAL_THEATRE_URL}?date={control_date.isoformat()}"
     try:
@@ -259,28 +245,9 @@ def main() -> int:
         health_errors.append("No AMC dates could be checked")
 
     health_error = " | ".join(sorted(set(health_errors)))
+    if health_error:
+        print(f"HEALTH WARNING (log only; no phone notification): {health_error}")
 
-    if health_error and health_error != previous_health_error:
-        send_text_notification(
-            "Odyssey bot health warning",
-            "The monitor detected a possible AMC parsing/fetch problem:\n\n"
-            + health_error
-            + "\n\nDo not rely on silent checks until this is fixed.",
-            priority="urgent",
-            click=CANONICAL_THEATRE_URL,
-        )
-        print(f"HEALTH WARNING: {health_error}")
-    elif not health_error and previous_health_error:
-        send_text_notification(
-            "Odyssey bot healthy again",
-            "AMC health checks are passing and the monitor is reading CityWalk ticket links normally again.",
-            priority="default",
-            click=CANONICAL_THEATRE_URL,
-        )
-        print("Health recovered.")
-
-    # The parser was materially upgraded. On its first v2 run, establish a fresh
-    # baseline so existing showtimes do not look like a giant new ticket drop.
     migration_baseline = previous_version < STATE_VERSION
     if migration_baseline or not initialized:
         save_state({
@@ -300,7 +267,6 @@ def main() -> int:
         send_ticket_notification(new_items)
         print(f"Sent phone notification for {len(new_items)} newly clickable showtime(s).")
 
-    # On a health failure, don't erase prior state based on potentially incomplete data.
     if health_error:
         next_active = dict(previous_active)
         next_active.update(current)
