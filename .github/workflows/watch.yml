@@ -1,14 +1,9 @@
 name: Odyssey 70mm CityWalk Watch
 
-# One-time edit to launch an immediate check.
 on:
   schedule:
     - cron: "2/5 * * * *"
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/watch.yml"
 
 permissions:
   contents: write
