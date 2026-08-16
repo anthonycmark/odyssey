@@ -1,107 +1,5 @@
 {
   "active": {
-    "2026-08-15|145322298": {
-      "date": "2026-08-15",
-      "showtime_id": "145322298",
-      "time": "7:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145322298"
-    },
-    "2026-08-15|145322299": {
-      "date": "2026-08-15",
-      "showtime_id": "145322299",
-      "time": "11:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145322299"
-    },
-    "2026-08-16|145322300": {
-      "date": "2026-08-16",
-      "showtime_id": "145322300",
-      "time": "3:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145322300"
-    },
-    "2026-08-16|145322301": {
-      "date": "2026-08-16",
-      "showtime_id": "145322301",
-      "time": "7:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145322301"
-    },
-    "2026-08-16|145322302": {
-      "date": "2026-08-16",
-      "showtime_id": "145322302",
-      "time": "11:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145322302"
-    },
-    "2026-08-16|145377401": {
-      "date": "2026-08-16",
-      "showtime_id": "145377401",
-      "time": "11:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145377401"
-    },
-    "2026-08-16|145378152": {
-      "date": "2026-08-16",
-      "showtime_id": "145378152",
-      "time": "7:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145378152"
-    },
-    "2026-08-17|145377402": {
-      "date": "2026-08-17",
-      "showtime_id": "145377402",
-      "time": "11:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145377402"
-    },
-    "2026-08-17|145377403": {
-      "date": "2026-08-17",
-      "showtime_id": "145377403",
-      "time": "3:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145377403"
-    },
-    "2026-08-17|145377404": {
-      "date": "2026-08-17",
-      "showtime_id": "145377404",
-      "time": "7:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145377404"
-    },
-    "2026-08-17|145377405": {
-      "date": "2026-08-17",
-      "showtime_id": "145377405",
-      "time": "11:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145377405"
-    },
-    "2026-08-17|145513921": {
-      "date": "2026-08-17",
-      "showtime_id": "145513921",
-      "time": "7:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145513921"
-    },
-    "2026-08-18|145377406": {
-      "date": "2026-08-18",
-      "showtime_id": "145377406",
-      "time": "11:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145377406"
-    },
-    "2026-08-18|145377407": {
-      "date": "2026-08-18",
-      "showtime_id": "145377407",
-      "time": "3:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145377407"
-    },
-    "2026-08-18|145377408": {
-      "date": "2026-08-18",
-      "showtime_id": "145377408",
-      "time": "7:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145377408"
-    },
-    "2026-08-18|145377409": {
-      "date": "2026-08-18",
-      "showtime_id": "145377409",
-      "time": "11:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145377409"
-    },
-    "2026-08-18|145513923": {
-      "date": "2026-08-18",
-      "showtime_id": "145513923",
-      "time": "7:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145513923"
-    },
     "2026-08-19|145377410": {
       "date": "2026-08-19",
       "showtime_id": "145377410",
@@ -132,30 +30,6 @@
       "time": "7:00AM",
       "url": "https://www.amctheatres.com/showtimes/145513925"
     },
-    "2026-08-20|145681084": {
-      "date": "2026-08-20",
-      "showtime_id": "145681084",
-      "time": "10:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145681084"
-    },
-    "2026-08-20|145681085": {
-      "date": "2026-08-20",
-      "showtime_id": "145681085",
-      "time": "2:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681085"
-    },
-    "2026-08-20|145681086": {
-      "date": "2026-08-20",
-      "showtime_id": "145681086",
-      "time": "6:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681086"
-    },
-    "2026-08-20|145681087": {
-      "date": "2026-08-20",
-      "showtime_id": "145681087",
-      "time": "10:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681087"
-    },
     "2026-08-21|145674736": {
       "date": "2026-08-21",
       "showtime_id": "145674736",
@@ -185,84 +59,6 @@
       "showtime_id": "145905771",
       "time": "2:00AM",
       "url": "https://www.amctheatres.com/showtimes/145905771"
-    },
-    "2026-08-22|145674737": {
-      "date": "2026-08-22",
-      "showtime_id": "145674737",
-      "time": "6:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145674737"
-    },
-    "2026-08-22|145681183": {
-      "date": "2026-08-22",
-      "showtime_id": "145681183",
-      "time": "10:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145681183"
-    },
-    "2026-08-22|145681184": {
-      "date": "2026-08-22",
-      "showtime_id": "145681184",
-      "time": "2:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681184"
-    },
-    "2026-08-22|145681185": {
-      "date": "2026-08-22",
-      "showtime_id": "145681185",
-      "time": "10:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681185"
-    },
-    "2026-08-22|145905772": {
-      "date": "2026-08-22",
-      "showtime_id": "145905772",
-      "time": "2:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145905772"
-    },
-    "2026-08-23|145681176": {
-      "date": "2026-08-23",
-      "showtime_id": "145681176",
-      "time": "6:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681176"
-    },
-    "2026-08-23|145681177": {
-      "date": "2026-08-23",
-      "showtime_id": "145681177",
-      "time": "10:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681177"
-    },
-    "2026-08-23|145681186": {
-      "date": "2026-08-23",
-      "showtime_id": "145681186",
-      "time": "10:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145681186"
-    },
-    "2026-08-23|145681187": {
-      "date": "2026-08-23",
-      "showtime_id": "145681187",
-      "time": "2:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681187"
-    },
-    "2026-08-24|145681178": {
-      "date": "2026-08-24",
-      "showtime_id": "145681178",
-      "time": "10:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145681178"
-    },
-    "2026-08-24|145681179": {
-      "date": "2026-08-24",
-      "showtime_id": "145681179",
-      "time": "2:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681179"
-    },
-    "2026-08-24|145681180": {
-      "date": "2026-08-24",
-      "showtime_id": "145681180",
-      "time": "6:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681180"
-    },
-    "2026-08-24|145681181": {
-      "date": "2026-08-24",
-      "showtime_id": "145681181",
-      "time": "10:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681181"
     },
     "2026-08-25|145681170": {
       "date": "2026-08-25",
@@ -311,30 +107,6 @@
       "showtime_id": "145681175",
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681175"
-    },
-    "2026-08-27|145681166": {
-      "date": "2026-08-27",
-      "showtime_id": "145681166",
-      "time": "10:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145681166"
-    },
-    "2026-08-27|145681167": {
-      "date": "2026-08-27",
-      "showtime_id": "145681167",
-      "time": "2:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681167"
-    },
-    "2026-08-27|145681168": {
-      "date": "2026-08-27",
-      "showtime_id": "145681168",
-      "time": "6:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681168"
-    },
-    "2026-08-27|145681169": {
-      "date": "2026-08-27",
-      "showtime_id": "145681169",
-      "time": "10:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681169"
     },
     "2026-08-28|145676927": {
       "date": "2026-08-28",
@@ -515,30 +287,6 @@
       "showtime_id": "145681145",
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681145"
-    },
-    "2026-09-04|145676929": {
-      "date": "2026-09-04",
-      "showtime_id": "145676929",
-      "time": "6:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145676929"
-    },
-    "2026-09-04|145681136": {
-      "date": "2026-09-04",
-      "showtime_id": "145681136",
-      "time": "10:00AM",
-      "url": "https://www.amctheatres.com/showtimes/145681136"
-    },
-    "2026-09-04|145681137": {
-      "date": "2026-09-04",
-      "showtime_id": "145681137",
-      "time": "2:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681137"
-    },
-    "2026-09-04|145681138": {
-      "date": "2026-09-04",
-      "showtime_id": "145681138",
-      "time": "10:00PM",
-      "url": "https://www.amctheatres.com/showtimes/145681138"
     },
     "2026-09-05|145676930": {
       "date": "2026-09-05",
