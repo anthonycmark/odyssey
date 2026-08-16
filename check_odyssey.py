@@ -12,7 +12,7 @@ import requests
 from bs4 import BeautifulSoup
 
 STATE_PATH = Path("state.json")
-STATE_VERSION = 3
+STATE_VERSION = 4
 PACIFIC = ZoneInfo("America/Los_Angeles")
 DAYS_AHEAD = int(os.getenv("DAYS_AHEAD", "21"))
 NTFY_TOPIC = os.getenv("NTFY_TOPIC", "").strip()
@@ -39,32 +39,48 @@ def load_state() -> dict:
     try:
         return json.loads(STATE_PATH.read_text(encoding="utf-8"))
     except Exception:
-        return {"version": 0, "initialized": False, "showings": {}, "health_error": ""}
+        return {
+            "version": 0,
+            "initialized": False,
+            "seen_dates": [],
+            "showings": {},
+            "health_error": "",
+        }
 
 
 def save_state(state: dict) -> None:
     STATE_PATH.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def send_showing_notification(items: list[dict]) -> None:
+def send_new_date_notification(new_dates: list[str], showings: dict[str, dict]) -> None:
+    """Phone alerts are ONLY for calendar dates that have never been seen before."""
     if not NTFY_TOPIC:
         raise RuntimeError("GitHub secret NTFY_TOPIC is not configured")
 
-    items = sorted(items, key=lambda x: (x["date"], x["time"]))
-    lines = [f"{x['date']} — {x['time']}" for x in items[:12]]
-    if len(items) > 12:
-        lines.append(f"+ {len(items) - 12} more")
+    new_dates = sorted(new_dates)
+    lines: list[str] = []
+    click = CANONICAL_THEATRE_URL
+
+    for date_string in new_dates:
+        date_items = sorted(
+            (item for item in showings.values() if item["date"] == date_string),
+            key=lambda item: item["time"],
+        )
+        times = ", ".join(item["time"] for item in date_items)
+        lines.append(f"{date_string} — {times or 'showtimes listed on AMC'}")
+        if date_items and click == CANONICAL_THEATRE_URL:
+            click = date_items[0]["url"]
 
     headers = {
-        "Title": "NEW Odyssey 70mm showing",
+        "Title": "NEW Odyssey 70mm date added",
         "Priority": "urgent",
         "Tags": "ticket",
-        "Click": items[0]["url"],
+        "Click": click,
     }
     message = (
-        "New Odyssey IMAX 70mm showing(s) were added at Universal CityWalk:\n"
+        "AMC added Odyssey IMAX 70mm showings on a NEW FUTURE DATE at Universal CityWalk:\n"
         + "\n".join(lines)
-        + "\n\nTap to open AMC."
+        + "\n\nNo alerts are sent for new times or ticket changes on dates already seen."
     )
     response = requests.post(
         f"{NTFY_SERVER}/{NTFY_TOPIC}",
@@ -127,7 +143,7 @@ def page_has_odyssey_70mm_with_time(soup: BeautifulSoup) -> bool:
 
 
 def parse_listing_page(html: str, show_date) -> tuple[dict[str, dict], int, bool]:
-    """Return every listed Odyssey IMAX 70mm showing, whether sold out or purchasable."""
+    """Return every listed Odyssey IMAX 70mm showing; ticket status does not affect date tracking."""
     soup = BeautifulSoup(html, "html.parser")
     found: dict[str, dict] = {}
     generic_ids: set[str] = set()
@@ -141,8 +157,7 @@ def parse_listing_page(html: str, show_date) -> tuple[dict[str, dict], int, bool
         sid = match.group(1)
         generic_ids.add(sid)
 
-        movie_format_text = nearby_odyssey_70mm_text(a)
-        if not movie_format_text:
+        if not nearby_odyssey_70mm_text(a):
             continue
 
         one_showtime_text = local_showtime_text(a)
@@ -175,6 +190,16 @@ def fetch_listing(session: requests.Session, show_date) -> tuple[dict[str, dict]
     raise RuntimeError(last_error or "both AMC listing URLs failed")
 
 
+def legacy_dates_from_state(state: dict) -> set[str]:
+    """Preserve every date remembered by older state formats during migration."""
+    dates = set(state.get("seen_dates") or [])
+    legacy_showings = state.get("showings") or state.get("active") or state.get("seen") or {}
+    for item in legacy_showings.values():
+        if isinstance(item, dict) and item.get("date"):
+            dates.add(str(item["date"]))
+    return dates
+
+
 def main() -> int:
     session = requests.Session()
     session.headers.update({
@@ -186,11 +211,10 @@ def main() -> int:
     state = load_state()
     previous_version = int(state.get("version", 0) or 0)
     initialized = bool(state.get("initialized", False))
-    previous_showings: dict[str, dict] = (
-        state.get("showings") or state.get("active") or state.get("seen") or {}
-    )
+    seen_dates = legacy_dates_from_state(state)
 
     local_today = datetime.now(PACIFIC).date()
+    today_string = local_today.isoformat()
     health_errors: list[str] = []
 
     control_date = local_today + timedelta(days=1)
@@ -249,49 +273,63 @@ def main() -> int:
     if health_error:
         print(f"HEALTH WARNING (log only; no phone notification): {health_error}")
 
-    # Version 3 changes the meaning of state from purchasable links to ALL listed
-    # showings. Establish a fresh baseline so ticket/restock status changes on
-    # existing showings can never generate a false "new showing" notification.
+    current_dates = {item["date"] for item in current_showings.values()}
+
+    # V4 changes the alert unit from individual showtimes to CALENDAR DATES.
+    # Baseline everything currently visible without notifying. Older known dates
+    # are retained permanently so a disappearing/reappearing date cannot alert.
     migration_baseline = previous_version < STATE_VERSION
     if migration_baseline or not initialized:
+        seen_dates.update(current_dates)
         save_state({
             "version": STATE_VERSION,
             "initialized": True,
-            "showings": current_showings if not health_error else previous_showings,
+            "seen_dates": sorted(seen_dates),
+            "showings": current_showings,
             "health_error": health_error,
         })
         print(
-            f"V{STATE_VERSION} showing baseline saved with {len(current_showings)} listed showing(s); "
-            "no phone alert sent for pre-existing showings."
+            f"V{STATE_VERSION} date baseline saved with {len(seen_dates)} known date(s); "
+            "no phone alert sent for any existing date or time."
         )
         return 0 if not health_error else 2
 
-    # ONLY a brand-new AMC showing ID/date can trigger a phone alert. Changes to
-    # seats, sold-out status, or ticket availability inside an existing showing
-    # do not matter because its key is already remembered.
-    new_showings = [
-        item for key, item in current_showings.items() if key not in previous_showings
-    ]
-    if new_showings:
-        send_showing_notification(new_showings)
-        print(f"Sent phone notification for {len(new_showings)} newly listed showing(s).")
+    # EXACT ALERT RULE:
+    # 1. The calendar date must never have been seen before.
+    # 2. It must be strictly AFTER today in Pacific time.
+    # New times, ticket restocks, sold-out/full changes, or reappearing showtimes
+    # on a known date are ignored completely.
+    new_future_dates = sorted(
+        date_string
+        for date_string in current_dates
+        if date_string > today_string and date_string not in seen_dates
+    )
 
-    if health_error:
-        next_showings = dict(previous_showings)
-        next_showings.update(current_showings)
-    else:
-        next_showings = current_showings
+    if new_future_dates and not health_error:
+        send_new_date_notification(new_future_dates, current_showings)
+        print(f"Sent phone notification for {len(new_future_dates)} brand-new future date(s).")
+    elif new_future_dates:
+        print(
+            f"Detected {len(new_future_dates)} possible new future date(s), but health is WARNING; "
+            "no phone notification sent."
+        )
+
+    # Once AMC has shown a date, remember it permanently. This prevents any
+    # later changes within that date from ever generating another phone alert.
+    seen_dates.update(current_dates)
 
     save_state({
         "version": STATE_VERSION,
         "initialized": True,
-        "showings": next_showings,
+        "seen_dates": sorted(seen_dates),
+        "showings": current_showings,
         "health_error": health_error,
     })
 
     print(
-        f"Checked {successful_dates} dates; {len(current_showings)} listed Odyssey IMAX 70mm showing(s); "
-        f"{len(new_showings)} newly added; health={'OK' if not health_error else 'WARNING'}."
+        f"Checked {successful_dates} dates; {len(current_dates)} date(s) currently listed; "
+        f"{len(new_future_dates)} brand-new future date(s); "
+        f"health={'OK' if not health_error else 'WARNING'}."
     )
     return 0 if not health_error else 2
 
