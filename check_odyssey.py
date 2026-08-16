@@ -12,7 +12,7 @@ import requests
 from bs4 import BeautifulSoup
 
 STATE_PATH = Path("state.json")
-STATE_VERSION = 2
+STATE_VERSION = 3
 PACIFIC = ZoneInfo("America/Los_Angeles")
 DAYS_AHEAD = int(os.getenv("DAYS_AHEAD", "21"))
 NTFY_TOPIC = os.getenv("NTFY_TOPIC", "").strip()
@@ -39,14 +39,14 @@ def load_state() -> dict:
     try:
         return json.loads(STATE_PATH.read_text(encoding="utf-8"))
     except Exception:
-        return {"version": 0, "initialized": False, "active": {}, "health_error": ""}
+        return {"version": 0, "initialized": False, "showings": {}, "health_error": ""}
 
 
 def save_state(state: dict) -> None:
     STATE_PATH.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def send_ticket_notification(items: list[dict]) -> None:
+def send_showing_notification(items: list[dict]) -> None:
     if not NTFY_TOPIC:
         raise RuntimeError("GitHub secret NTFY_TOPIC is not configured")
 
@@ -56,13 +56,13 @@ def send_ticket_notification(items: list[dict]) -> None:
         lines.append(f"+ {len(items) - 12} more")
 
     headers = {
-        "Title": "NEW Odyssey 70mm tickets",
+        "Title": "NEW Odyssey 70mm showing",
         "Priority": "urgent",
         "Tags": "ticket",
         "Click": items[0]["url"],
     }
     message = (
-        "New Odyssey IMAX 70mm ticket links appeared at Universal CityWalk:\n"
+        "New Odyssey IMAX 70mm showing(s) were added at Universal CityWalk:\n"
         + "\n".join(lines)
         + "\n\nTap to open AMC."
     )
@@ -127,6 +127,7 @@ def page_has_odyssey_70mm_with_time(soup: BeautifulSoup) -> bool:
 
 
 def parse_listing_page(html: str, show_date) -> tuple[dict[str, dict], int, bool]:
+    """Return every listed Odyssey IMAX 70mm showing, whether sold out or purchasable."""
     soup = BeautifulSoup(html, "html.parser")
     found: dict[str, dict] = {}
     generic_ids: set[str] = set()
@@ -145,18 +146,16 @@ def parse_listing_page(html: str, show_date) -> tuple[dict[str, dict], int, bool
             continue
 
         one_showtime_text = local_showtime_text(a)
-        if "sold out" in norm(one_showtime_text):
-            continue
-
         tm = TIME_RE.search(" ".join(a.stripped_strings)) or TIME_RE.search(one_showtime_text)
         display_time = tm.group(1).upper().replace(" ", "") if tm else "time listed on AMC"
-        ticket_url = urljoin(CANONICAL_THEATRE_URL, href.split("?")[0])
+        showing_url = urljoin(CANONICAL_THEATRE_URL, href.split("?")[0])
         key = f"{show_date.isoformat()}|{sid}"
         found[key] = {
             "date": show_date.isoformat(),
             "time": display_time,
             "showtime_id": sid,
-            "url": ticket_url,
+            "url": showing_url,
+            "sold_out": "sold out" in norm(one_showtime_text),
         }
 
     return found, len(generic_ids), page_has_odyssey_70mm_with_time(soup)
@@ -187,7 +186,9 @@ def main() -> int:
     state = load_state()
     previous_version = int(state.get("version", 0) or 0)
     initialized = bool(state.get("initialized", False))
-    previous_active: dict[str, dict] = state.get("active") or state.get("seen") or {}
+    previous_showings: dict[str, dict] = (
+        state.get("showings") or state.get("active") or state.get("seen") or {}
+    )
 
     local_today = datetime.now(PACIFIC).date()
     health_errors: list[str] = []
@@ -217,7 +218,7 @@ def main() -> int:
     except Exception as exc:
         health_errors.append(f"AMC control page request failed: {exc}")
 
-    current: dict[str, dict] = {}
+    current_showings: dict[str, dict] = {}
     successful_dates = 0
 
     for offset in range(DAYS_AHEAD + 1):
@@ -225,17 +226,17 @@ def main() -> int:
         try:
             parsed, generic_count, signal, source_url = fetch_listing(session, d)
             successful_dates += 1
-            current.update(parsed)
+            current_showings.update(parsed)
 
             if signal and not parsed:
                 health_errors.append(
-                    f"AMC shows Odyssey + IMAX 70mm + a time on {d}, but no clickable showtime link was parsed"
+                    f"AMC shows Odyssey + IMAX 70mm + a time on {d}, but no showing ID was parsed"
                 )
 
             if parsed or signal:
                 times = ", ".join(sorted(item["time"] for item in parsed.values()))
                 print(
-                    f"{d}: {len(parsed)} clickable Odyssey IMAX 70mm link(s), "
+                    f"{d}: {len(parsed)} listed Odyssey IMAX 70mm showing(s), "
                     f"{generic_count} total IMAX link(s), signal={signal}; times=[{times}]"
                 )
         except Exception as exc:
@@ -248,41 +249,49 @@ def main() -> int:
     if health_error:
         print(f"HEALTH WARNING (log only; no phone notification): {health_error}")
 
+    # Version 3 changes the meaning of state from purchasable links to ALL listed
+    # showings. Establish a fresh baseline so ticket/restock status changes on
+    # existing showings can never generate a false "new showing" notification.
     migration_baseline = previous_version < STATE_VERSION
     if migration_baseline or not initialized:
         save_state({
             "version": STATE_VERSION,
             "initialized": True,
-            "active": current if not health_error else previous_active,
+            "showings": current_showings if not health_error else previous_showings,
             "health_error": health_error,
         })
         print(
-            f"V{STATE_VERSION} baseline saved with {len(current)} current clickable showtime link(s); "
-            "no ticket alert sent for pre-existing listings."
+            f"V{STATE_VERSION} showing baseline saved with {len(current_showings)} listed showing(s); "
+            "no phone alert sent for pre-existing showings."
         )
         return 0 if not health_error else 2
 
-    new_items = [item for key, item in current.items() if key not in previous_active]
-    if new_items:
-        send_ticket_notification(new_items)
-        print(f"Sent phone notification for {len(new_items)} newly clickable showtime(s).")
+    # ONLY a brand-new AMC showing ID/date can trigger a phone alert. Changes to
+    # seats, sold-out status, or ticket availability inside an existing showing
+    # do not matter because its key is already remembered.
+    new_showings = [
+        item for key, item in current_showings.items() if key not in previous_showings
+    ]
+    if new_showings:
+        send_showing_notification(new_showings)
+        print(f"Sent phone notification for {len(new_showings)} newly listed showing(s).")
 
     if health_error:
-        next_active = dict(previous_active)
-        next_active.update(current)
+        next_showings = dict(previous_showings)
+        next_showings.update(current_showings)
     else:
-        next_active = current
+        next_showings = current_showings
 
     save_state({
         "version": STATE_VERSION,
         "initialized": True,
-        "active": next_active,
+        "showings": next_showings,
         "health_error": health_error,
     })
 
     print(
-        f"Checked {successful_dates} dates; {len(current)} clickable Odyssey IMAX 70mm link(s); "
-        f"{len(new_items)} newly available; health={'OK' if not health_error else 'WARNING'}."
+        f"Checked {successful_dates} dates; {len(current_showings)} listed Odyssey IMAX 70mm showing(s); "
+        f"{len(new_showings)} newly added; health={'OK' if not health_error else 'WARNING'}."
     )
     return 0 if not health_error else 2
 
