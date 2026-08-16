@@ -1,553 +1,679 @@
 {
-  "active": {
+  "health_error": "",
+  "initialized": true,
+  "showings": {
     "2026-08-16|145322300": {
       "date": "2026-08-16",
       "showtime_id": "145322300",
+      "sold_out": false,
       "time": "3:00PM",
       "url": "https://www.amctheatres.com/showtimes/145322300"
     },
     "2026-08-16|145322301": {
       "date": "2026-08-16",
       "showtime_id": "145322301",
+      "sold_out": false,
       "time": "7:00PM",
       "url": "https://www.amctheatres.com/showtimes/145322301"
     },
     "2026-08-16|145322302": {
       "date": "2026-08-16",
       "showtime_id": "145322302",
+      "sold_out": false,
       "time": "11:00PM",
       "url": "https://www.amctheatres.com/showtimes/145322302"
     },
     "2026-08-16|145377401": {
       "date": "2026-08-16",
       "showtime_id": "145377401",
+      "sold_out": false,
       "time": "11:00AM",
       "url": "https://www.amctheatres.com/showtimes/145377401"
     },
     "2026-08-17|145377402": {
       "date": "2026-08-17",
       "showtime_id": "145377402",
+      "sold_out": false,
       "time": "11:00AM",
       "url": "https://www.amctheatres.com/showtimes/145377402"
     },
     "2026-08-17|145377403": {
       "date": "2026-08-17",
       "showtime_id": "145377403",
+      "sold_out": false,
       "time": "3:00PM",
       "url": "https://www.amctheatres.com/showtimes/145377403"
     },
     "2026-08-17|145377404": {
       "date": "2026-08-17",
       "showtime_id": "145377404",
+      "sold_out": false,
       "time": "7:00PM",
       "url": "https://www.amctheatres.com/showtimes/145377404"
     },
     "2026-08-17|145377405": {
       "date": "2026-08-17",
       "showtime_id": "145377405",
+      "sold_out": false,
       "time": "11:00PM",
       "url": "https://www.amctheatres.com/showtimes/145377405"
     },
     "2026-08-17|145513921": {
       "date": "2026-08-17",
       "showtime_id": "145513921",
+      "sold_out": false,
       "time": "7:00AM",
       "url": "https://www.amctheatres.com/showtimes/145513921"
     },
     "2026-08-18|145377406": {
       "date": "2026-08-18",
       "showtime_id": "145377406",
+      "sold_out": false,
       "time": "11:00AM",
       "url": "https://www.amctheatres.com/showtimes/145377406"
     },
     "2026-08-18|145377407": {
       "date": "2026-08-18",
       "showtime_id": "145377407",
+      "sold_out": false,
       "time": "3:00PM",
       "url": "https://www.amctheatres.com/showtimes/145377407"
     },
     "2026-08-18|145377408": {
       "date": "2026-08-18",
       "showtime_id": "145377408",
+      "sold_out": false,
       "time": "7:00PM",
       "url": "https://www.amctheatres.com/showtimes/145377408"
     },
     "2026-08-18|145377409": {
       "date": "2026-08-18",
       "showtime_id": "145377409",
+      "sold_out": false,
       "time": "11:00PM",
       "url": "https://www.amctheatres.com/showtimes/145377409"
     },
     "2026-08-18|145513923": {
       "date": "2026-08-18",
       "showtime_id": "145513923",
+      "sold_out": false,
       "time": "7:00AM",
       "url": "https://www.amctheatres.com/showtimes/145513923"
     },
     "2026-08-19|145377410": {
       "date": "2026-08-19",
       "showtime_id": "145377410",
+      "sold_out": false,
       "time": "11:00AM",
       "url": "https://www.amctheatres.com/showtimes/145377410"
     },
     "2026-08-19|145377411": {
       "date": "2026-08-19",
       "showtime_id": "145377411",
+      "sold_out": false,
       "time": "3:00PM",
       "url": "https://www.amctheatres.com/showtimes/145377411"
     },
     "2026-08-19|145377412": {
       "date": "2026-08-19",
       "showtime_id": "145377412",
+      "sold_out": false,
       "time": "7:00PM",
       "url": "https://www.amctheatres.com/showtimes/145377412"
     },
     "2026-08-19|145377413": {
       "date": "2026-08-19",
       "showtime_id": "145377413",
+      "sold_out": false,
       "time": "11:00PM",
       "url": "https://www.amctheatres.com/showtimes/145377413"
     },
     "2026-08-19|145513925": {
       "date": "2026-08-19",
       "showtime_id": "145513925",
+      "sold_out": false,
       "time": "7:00AM",
       "url": "https://www.amctheatres.com/showtimes/145513925"
     },
     "2026-08-20|145681084": {
       "date": "2026-08-20",
       "showtime_id": "145681084",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681084"
     },
     "2026-08-20|145681085": {
       "date": "2026-08-20",
       "showtime_id": "145681085",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681085"
     },
     "2026-08-20|145681086": {
       "date": "2026-08-20",
       "showtime_id": "145681086",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681086"
     },
     "2026-08-20|145681087": {
       "date": "2026-08-20",
       "showtime_id": "145681087",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681087"
     },
     "2026-08-21|145674736": {
       "date": "2026-08-21",
       "showtime_id": "145674736",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145674736"
     },
     "2026-08-21|145681088": {
       "date": "2026-08-21",
       "showtime_id": "145681088",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681088"
     },
     "2026-08-21|145681089": {
       "date": "2026-08-21",
       "showtime_id": "145681089",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681089"
     },
     "2026-08-21|145681182": {
       "date": "2026-08-21",
       "showtime_id": "145681182",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681182"
     },
     "2026-08-21|145905771": {
       "date": "2026-08-21",
       "showtime_id": "145905771",
+      "sold_out": false,
       "time": "2:00AM",
       "url": "https://www.amctheatres.com/showtimes/145905771"
     },
     "2026-08-22|145674737": {
       "date": "2026-08-22",
       "showtime_id": "145674737",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145674737"
     },
     "2026-08-22|145681183": {
       "date": "2026-08-22",
       "showtime_id": "145681183",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681183"
     },
     "2026-08-22|145681184": {
       "date": "2026-08-22",
       "showtime_id": "145681184",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681184"
     },
     "2026-08-22|145681185": {
       "date": "2026-08-22",
       "showtime_id": "145681185",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681185"
     },
     "2026-08-22|145905772": {
       "date": "2026-08-22",
       "showtime_id": "145905772",
+      "sold_out": false,
       "time": "2:00AM",
       "url": "https://www.amctheatres.com/showtimes/145905772"
     },
     "2026-08-23|145681176": {
       "date": "2026-08-23",
       "showtime_id": "145681176",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681176"
     },
     "2026-08-23|145681177": {
       "date": "2026-08-23",
       "showtime_id": "145681177",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681177"
     },
     "2026-08-23|145681186": {
       "date": "2026-08-23",
       "showtime_id": "145681186",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681186"
     },
     "2026-08-23|145681187": {
       "date": "2026-08-23",
       "showtime_id": "145681187",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681187"
     },
     "2026-08-24|145681178": {
       "date": "2026-08-24",
       "showtime_id": "145681178",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681178"
     },
     "2026-08-24|145681179": {
       "date": "2026-08-24",
       "showtime_id": "145681179",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681179"
     },
     "2026-08-24|145681180": {
       "date": "2026-08-24",
       "showtime_id": "145681180",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681180"
     },
     "2026-08-24|145681181": {
       "date": "2026-08-24",
       "showtime_id": "145681181",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681181"
     },
     "2026-08-25|145681170": {
       "date": "2026-08-25",
       "showtime_id": "145681170",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681170"
     },
     "2026-08-25|145681171": {
       "date": "2026-08-25",
       "showtime_id": "145681171",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681171"
     },
     "2026-08-25|145681172": {
       "date": "2026-08-25",
       "showtime_id": "145681172",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681172"
     },
     "2026-08-25|145681173": {
       "date": "2026-08-25",
       "showtime_id": "145681173",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681173"
     },
     "2026-08-26|145681164": {
       "date": "2026-08-26",
       "showtime_id": "145681164",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681164"
     },
     "2026-08-26|145681165": {
       "date": "2026-08-26",
       "showtime_id": "145681165",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681165"
     },
     "2026-08-26|145681174": {
       "date": "2026-08-26",
       "showtime_id": "145681174",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681174"
     },
     "2026-08-26|145681175": {
       "date": "2026-08-26",
       "showtime_id": "145681175",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681175"
     },
     "2026-08-27|145681166": {
       "date": "2026-08-27",
       "showtime_id": "145681166",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681166"
     },
     "2026-08-27|145681167": {
       "date": "2026-08-27",
       "showtime_id": "145681167",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681167"
     },
     "2026-08-27|145681168": {
       "date": "2026-08-27",
       "showtime_id": "145681168",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681168"
     },
     "2026-08-27|145681169": {
       "date": "2026-08-27",
       "showtime_id": "145681169",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681169"
     },
     "2026-08-28|145676927": {
       "date": "2026-08-28",
       "showtime_id": "145676927",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145676927"
     },
     "2026-08-28|145681158": {
       "date": "2026-08-28",
       "showtime_id": "145681158",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681158"
     },
     "2026-08-28|145681159": {
       "date": "2026-08-28",
       "showtime_id": "145681159",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681159"
     },
     "2026-08-28|145681160": {
       "date": "2026-08-28",
       "showtime_id": "145681160",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681160"
     },
     "2026-08-28|145905773": {
       "date": "2026-08-28",
       "showtime_id": "145905773",
+      "sold_out": false,
       "time": "2:00AM",
       "url": "https://www.amctheatres.com/showtimes/145905773"
+    },
+    "2026-08-29|145676928": {
+      "date": "2026-08-29",
+      "showtime_id": "145676928",
+      "sold_out": false,
+      "time": "6:00PM",
+      "url": "https://www.amctheatres.com/showtimes/145676928"
+    },
+    "2026-08-29|145681161": {
+      "date": "2026-08-29",
+      "showtime_id": "145681161",
+      "sold_out": false,
+      "time": "10:00AM",
+      "url": "https://www.amctheatres.com/showtimes/145681161"
+    },
+    "2026-08-29|145681162": {
+      "date": "2026-08-29",
+      "showtime_id": "145681162",
+      "sold_out": false,
+      "time": "2:00PM",
+      "url": "https://www.amctheatres.com/showtimes/145681162"
+    },
+    "2026-08-29|145681163": {
+      "date": "2026-08-29",
+      "showtime_id": "145681163",
+      "sold_out": false,
+      "time": "10:00PM",
+      "url": "https://www.amctheatres.com/showtimes/145681163"
+    },
+    "2026-08-29|145905774": {
+      "date": "2026-08-29",
+      "showtime_id": "145905774",
+      "sold_out": false,
+      "time": "2:00AM",
+      "url": "https://www.amctheatres.com/showtimes/145905774"
     },
     "2026-08-30|145681152": {
       "date": "2026-08-30",
       "showtime_id": "145681152",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681152"
     },
     "2026-08-30|145681153": {
       "date": "2026-08-30",
       "showtime_id": "145681153",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681153"
     },
     "2026-08-30|145681154": {
       "date": "2026-08-30",
       "showtime_id": "145681154",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681154"
     },
     "2026-08-30|145681155": {
       "date": "2026-08-30",
       "showtime_id": "145681155",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681155"
     },
     "2026-08-31|145681146": {
       "date": "2026-08-31",
       "showtime_id": "145681146",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681146"
     },
     "2026-08-31|145681147": {
       "date": "2026-08-31",
       "showtime_id": "145681147",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681147"
     },
     "2026-08-31|145681156": {
       "date": "2026-08-31",
       "showtime_id": "145681156",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681156"
     },
     "2026-08-31|145681157": {
       "date": "2026-08-31",
       "showtime_id": "145681157",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681157"
     },
     "2026-09-01|145681148": {
       "date": "2026-09-01",
       "showtime_id": "145681148",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681148"
     },
     "2026-09-01|145681149": {
       "date": "2026-09-01",
       "showtime_id": "145681149",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681149"
     },
     "2026-09-01|145681150": {
       "date": "2026-09-01",
       "showtime_id": "145681150",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681150"
     },
     "2026-09-01|145681151": {
       "date": "2026-09-01",
       "showtime_id": "145681151",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681151"
     },
     "2026-09-02|145681140": {
       "date": "2026-09-02",
       "showtime_id": "145681140",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681140"
     },
     "2026-09-02|145681141": {
       "date": "2026-09-02",
       "showtime_id": "145681141",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681141"
     },
     "2026-09-02|145681142": {
       "date": "2026-09-02",
       "showtime_id": "145681142",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681142"
     },
     "2026-09-02|145681143": {
       "date": "2026-09-02",
       "showtime_id": "145681143",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681143"
     },
     "2026-09-03|145681134": {
       "date": "2026-09-03",
       "showtime_id": "145681134",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681134"
     },
     "2026-09-03|145681135": {
       "date": "2026-09-03",
       "showtime_id": "145681135",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681135"
     },
     "2026-09-03|145681144": {
       "date": "2026-09-03",
       "showtime_id": "145681144",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681144"
     },
     "2026-09-03|145681145": {
       "date": "2026-09-03",
       "showtime_id": "145681145",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681145"
     },
     "2026-09-04|145676929": {
       "date": "2026-09-04",
       "showtime_id": "145676929",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145676929"
     },
     "2026-09-04|145681136": {
       "date": "2026-09-04",
       "showtime_id": "145681136",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681136"
     },
     "2026-09-04|145681137": {
       "date": "2026-09-04",
       "showtime_id": "145681137",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681137"
     },
     "2026-09-04|145681138": {
       "date": "2026-09-04",
       "showtime_id": "145681138",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681138"
     },
     "2026-09-05|145676930": {
       "date": "2026-09-05",
       "showtime_id": "145676930",
+      "sold_out": false,
       "time": "6:00PM",
       "url": "https://www.amctheatres.com/showtimes/145676930"
     },
     "2026-09-05|145681128": {
       "date": "2026-09-05",
       "showtime_id": "145681128",
+      "sold_out": false,
       "time": "2:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681128"
     },
     "2026-09-05|145681129": {
       "date": "2026-09-05",
       "showtime_id": "145681129",
+      "sold_out": false,
       "time": "10:00PM",
       "url": "https://www.amctheatres.com/showtimes/145681129"
     },
     "2026-09-05|145681139": {
       "date": "2026-09-05",
       "showtime_id": "145681139",
+      "sold_out": false,
       "time": "10:00AM",
       "url": "https://www.amctheatres.com/showtimes/145681139"
     },
     "2026-09-06|145047619": {
       "date": "2026-09-06",
       "showtime_id": "145047619",
+      "sold_out": false,
       "time": "6:00AM",
       "url": "https://www.amctheatres.com/showtimes/145047619"
     },
     "2026-09-06|145681130": {
       "date": "2026-09-06",
       "showtime_id": "145681130",
+      "sold_out": false,
       "time": "10:30AM",
       "url": "https://www.amctheatres.com/showtimes/145681130"
     },
     "2026-09-06|145681131": {
       "date": "2026-09-06",
       "showtime_id": "145681131",
+      "sold_out": false,
       "time": "2:30PM",
       "url": "https://www.amctheatres.com/showtimes/145681131"
     },
     "2026-09-06|145681132": {
       "date": "2026-09-06",
       "showtime_id": "145681132",
+      "sold_out": false,
       "time": "6:30PM",
       "url": "https://www.amctheatres.com/showtimes/145681132"
     },
     "2026-09-06|145681133": {
       "date": "2026-09-06",
       "showtime_id": "145681133",
+      "sold_out": false,
       "time": "10:30PM",
       "url": "https://www.amctheatres.com/showtimes/145681133"
     }
   },
-  "health_error": "AMC control page exposed only 0 generic showtime links; parsing may be broken",
-  "initialized": true,
-  "version": 2
+  "version": 3
 }
