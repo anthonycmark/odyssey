@@ -36,7 +36,16 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           DAYS_AHEAD: "21"
-        run: python check_odyssey.py
+        shell: bash
+        run: |
+          set +e
+          python check_odyssey.py
+          code=$?
+          if [ "$code" -eq 2 ]; then
+            echo "AMC health warning logged; keeping workflow successful to avoid repeated failure emails."
+            exit 0
+          fi
+          exit "$code"
 
       - name: Save monitor state
         if: always()
