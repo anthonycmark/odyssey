@@ -46,7 +46,7 @@
     "2026-09-29",
     "2026-09-30"
   ],
-  "health_error": "AMC control page exposed only 0 generic showtime links; parsing may be broken",
+  "health_error": "",
   "initialized": true,
   "seen_dates": [
     "2026-08-16",
