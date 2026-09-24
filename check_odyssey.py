@@ -39,7 +39,7 @@ def norm(text: str) -> str:
 def load_state() -> dict:
     try:
         return json.loads(STATE_PATH.read_text(encoding="utf-8"))
-    except Exception:
+    except FileNotFoundError:
         return {
             "version": 0,
             "initialized": False,
@@ -50,7 +50,9 @@ def load_state() -> dict:
 
 
 def save_state(state: dict) -> None:
-    STATE_PATH.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary = STATE_PATH.with_suffix(".tmp")
+    temporary.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(STATE_PATH)
 
 
 def send_new_date_notification(new_dates: list[str], showings: dict[str, dict]) -> None:
@@ -107,17 +109,29 @@ def local_showtime_text(a) -> str:
 
 
 def nearby_odyssey_70mm_text(a) -> str | None:
+    # Never climb past a movie card into neighbouring movies or format groups.
     node = a
     for _ in range(12):
         node = getattr(node, "parent", None)
-        if node is None:
+        if node is None or node.name in {"body", "html"}:
             break
         text = " ".join(getattr(node, "stripped_strings", []))
         if len(text) > 7000:
             break
-        low = norm(text)
-        if "the odyssey" in low and "imax" in low and ("70mm" in low or "70 mm" in low):
-            return text
+        titles = [norm(h.get_text(" ", strip=True))
+                  for h in node.find_all(re.compile(r"^h[1-6]$"))]
+        movie_titles = [t for t in titles if t and t not in {"imax 70mm", "imax", "70mm"}]
+        if movie_titles:
+            # Unknown/mixed movie containers cannot establish a match safely.
+            if any("the odyssey" not in t for t in movie_titles):
+                return None
+            low = norm(text)
+            if re.search(r"\bimax(?:®)?\s+70\s*mm\b", low):
+                # Format groups on one card must not contaminate one another.
+                if any(t in {"imax", "70mm"} for t in titles):
+                    return None
+                return text
+            return None
     return None
 
 
@@ -218,10 +232,10 @@ def main() -> int:
     })
 
     state = load_state()
-    previous_version = int(state.get("version", 0) or 0)
     initialized = bool(state.get("initialized", False))
     seen_dates = dates_from_legacy_state(state)
     checked_dates = set(state.get("checked_dates") or [])
+    pending = dict(state.get("pending_showings") or {})
 
     local_today = datetime.now(PACIFIC).date()
     health_errors: list[str] = []
@@ -252,41 +266,29 @@ def main() -> int:
     except Exception as exc:
         health_errors.append(f"AMC control page request failed: {exc}")
 
-    migration_baseline = previous_version < STATE_VERSION or not initialized
+    migration_baseline = not initialized
 
-    # On migration, establish a silent baseline across the current window plus a frontier
-    # beyond the latest already-known date. A never-before-observed date can NEVER alert;
-    # it must first have been observed empty, then later gain Odyssey 70mm showings.
+    # Keep at least the configured rolling window, even when all known dates
+    # are in the past. Pending dates must be revalidated before delivery.
     future_seen = future_date_objects(seen_dates, local_today)
     latest_seen = max(future_seen) if future_seen else local_today
-
-    if migration_baseline:
-        scan_end = max(
-            local_today + timedelta(days=DAYS_AHEAD),
-            latest_seen + timedelta(days=FRONTIER_DAYS),
-        )
-        dates_to_check = [
-            local_today + timedelta(days=offset)
-            for offset in range(1, (scan_end - local_today).days + 1)
-        ]
-    else:
-        # Existing dates are never scanned for alert purposes again. We only recheck dates
-        # that have NOT yet had Odyssey 70mm, including gaps and a 14-day frontier.
-        future_seen = future_date_objects(seen_dates, local_today)
-        latest_seen = max(future_seen) if future_seen else local_today
-        scan_end = latest_seen + timedelta(days=FRONTIER_DAYS)
-        dates_to_check = []
-        d = local_today + timedelta(days=1)
-        while d <= scan_end:
-            if d.isoformat() not in seen_dates:
-                dates_to_check.append(d)
-            d += timedelta(days=1)
+    scan_end = max(local_today + timedelta(days=DAYS_AHEAD),
+                   latest_seen + timedelta(days=FRONTIER_DAYS))
+    pending = {key: item for key, item in pending.items()
+               if date.fromisoformat(item["date"]) > local_today}
+    pending_dates = {item["date"] for item in pending.values()}
+    dates_to_check = [local_today + timedelta(days=offset)
+                     for offset in range(1, (scan_end - local_today).days + 1)
+                     if migration_baseline
+                     or (local_today + timedelta(days=offset)).isoformat() not in seen_dates
+                     or (local_today + timedelta(days=offset)).isoformat() in pending_dates]
 
     found_showings: dict[str, dict] = {}
     new_dates: list[str] = []
     successful_checks = 0
 
-    for d in dates_to_check:
+    # A failed control page cannot validate any result; avoid hammering a blocked source.
+    for d in ([] if health_errors else dates_to_check):
         date_string = d.isoformat()
         was_checked_before = date_string in checked_dates
         try:
@@ -306,16 +308,12 @@ def main() -> int:
                     f"times=[{times}]; checked_before={was_checked_before}"
                 )
 
-                # This is the only possible phone-alert condition:
-                # - future date
-                # - never previously had Odyssey IMAX 70mm
-                # - we had ALREADY checked this exact date on an earlier run and found none
-                # Therefore a date merely entering the scan frontier cannot generate a false alert.
-                if (
-                    not migration_baseline
-                    and was_checked_before
-                    and date_string not in seen_dates
-                ):
+                # First appearance of a calendar date is enough. Requiring a
+                # prior empty observation silently discarded newly listed dates.
+                eligible = {key: item for key, item in parsed.items()
+                            if not item.get("sold_out", False)}
+                if not migration_baseline and date_string not in seen_dates and eligible:
+                    pending.update(eligible)
                     new_dates.append(date_string)
 
                 seen_dates.add(date_string)
@@ -329,28 +327,52 @@ def main() -> int:
     if health_error:
         print(f"HEALTH WARNING (log only; no phone notification): {health_error}")
 
-    # Never send anything during a migration/baseline run. Also suppress alerts if
-    # the health checks are questionable rather than risk a bad notification.
-    if new_dates and not health_error:
-        send_new_date_notification(sorted(set(new_dates)), found_showings)
-        print(f"Sent phone notification for {len(set(new_dates))} truly new future date(s).")
-    elif new_dates:
-        print(
-            f"Detected {len(set(new_dates))} possible new date(s), but health is WARNING; "
-            "no phone notification sent."
-        )
+    # Retain pending dates across failed checks/delivery. Only acknowledge a
+    # date after ntfy accepts its notification, and revalidate availability now.
+    pending_dates = {item["date"] for item in pending.values()}
+    deliverable = {key: item for key, item in found_showings.items()
+                   if item["date"] in pending_dates and not item.get("sold_out", False)}
+    if deliverable and not health_error and not migration_baseline:
+        delivery_dates = sorted({item["date"] for item in deliverable.values()})
+        try:
+            send_new_date_notification(delivery_dates, deliverable)
+        except Exception as exc:
+            # Never print request URLs here: the ntfy topic is a secret.
+            health_errors.append(f"Notification delivery failed ({type(exc).__name__}); retained for retry")
+            health_error = " | ".join(sorted(set(health_errors)))
+        else:
+            pending = {key: item for key, item in pending.items()
+                       if item["date"] not in delivery_dates}
+            print(f"Sent notification for {len(delivery_dates)} new future date(s).")
 
+    # A failed first scan is not a baseline. Previously initialized installations
+    # retain their date history and do not silently rebaseline after an upgrade.
+    baseline_complete = not health_error and successful_checks == len(dates_to_check)
     save_state({
         "version": STATE_VERSION,
-        "initialized": True,
+        "initialized": initialized or baseline_complete,
         "seen_dates": sorted(seen_dates),
         "checked_dates": sorted(checked_dates),
+        "pending_showings": pending,
         "health_error": health_error,
+        "last_attempt_at": datetime.now(PACIFIC).isoformat(),
+        "last_success_at": (datetime.now(PACIFIC).isoformat() if baseline_complete
+                            else state.get("last_success_at")),
     })
+    status = "WARNING — live monitoring is impaired" if health_error else "OK"
+    summary = (f"### Odyssey date monitor: {status}\n"
+               f"Successfully checked {successful_checks}/{len(dates_to_check)} dates.\n\n"
+               f"Pending notification dates: {len({item['date'] for item in pending.values()})}.\n")
+    if health_error:
+        summary += "\nAMC checks or notification delivery failed. This run does not confirm that no new dates exist.\n"
+        print("::warning::Odyssey monitoring is impaired; see the run summary and saved health_error.")
+    if os.getenv("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as report:
+            report.write(summary)
 
     if migration_baseline:
         print(
-            f"V{STATE_VERSION} DATE-ONLY baseline complete: {len(seen_dates)} date(s) already known, "
+            f"V{STATE_VERSION} DATE-ONLY baseline {'complete' if baseline_complete else 'INCOMPLETE'}: {len(seen_dates)} date(s) already known, "
             f"{len(checked_dates)} future date(s) observed; NO phone alert sent."
         )
     else:
