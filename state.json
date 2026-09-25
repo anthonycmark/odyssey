@@ -48,7 +48,7 @@
   ],
   "health_error": "AMC control page request failed: 403 Client Error: Forbidden for url: https://www.amctheatres.com/movie-theatres/los-angeles/universal-cinema-amc-at-citywalk-hollywood/showtimes?date=2026-09-26",
   "initialized": true,
-  "last_attempt_at": "2026-09-25T10:21:58.261741-07:00",
+  "last_attempt_at": "2026-09-25T13:37:24.200037-07:00",
   "last_success_at": null,
   "pending_showings": {},
   "seen_dates": [
