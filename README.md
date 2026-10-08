@@ -1,70 +1,83 @@
 # Odyssey IMAX 70mm — Universal CityWalk date monitor
 
-This GitHub Actions monitor checks AMC's official Universal Cinema AMC at CityWalk Hollywood showtime pages and sends an ntfy alert only when **The Odyssey** appears in **IMAX 70mm** on a **future calendar date that has never previously qualified**.
+This GitHub Actions monitor watches **The Odyssey** in **IMAX 70mm** at Universal Cinema, an AMC Theatre at CityWalk Hollywood and sends an ntfy alert only when a **brand-new future calendar date** first appears.
 
-It tracks **dates, not individual showtimes**. If AMC adds another time on a date that was already known, there is no alert.
+It tracks **dates, not individual showtimes**. If a known date gains another showtime, changes availability, sells out, restocks, disappears, or later reappears, there is no alert.
 
-## What counts as an alert
+## Live source
 
-A future date qualifies only when the AMC page contains a matching Odyssey showtime in an explicitly IMAX 70mm context. The parser looks for AMC showtime links next to both:
+AMC's own website currently challenges/blocks requests from GitHub-hosted runners, including headless-browser requests. The monitor therefore uses the showtime feed behind CityWalk's Fandango ticketing page:
 
-- The Odyssey
-- an explicit IMAX 70MM label
+- Fandango theater ID: AAAWX
+- Chain: AMC
+- Venue: Universal Cinema, an AMC Theatre
+- Feed: Fandango theaterMovieShowtimes NAPI
 
-Regular IMAX, IMAX with Laser, and standard 70mm do not qualify.
+The request uses the same theater-page Referer and AJAX-style headers used by Fandango's web page. Each returned payload is validated against theater ID AAAWX before it is trusted.
 
-The monitor alerts only for a calendar date that is not already in ever_seen_dates.
+## What qualifies
 
-It deliberately ignores:
+A date qualifies only when a future CityWalk listing matches **The Odyssey** and the individual showtime explicitly carries an **IMAX 70MM** film-format marker.
 
-- additional showtimes on an already-known date
-- sold-out/full changes
-- seat or ticket restocks
-- a known date disappearing and later reappearing
-- today's date; only future dates are scanned
+The parser deliberately rejects:
 
-## AMC access
+- plain IMAX / digital IMAX
+- standard 70mm without IMAX
+- another movie's IMAX 70mm label
+- past or expired performances
 
-AMC currently blocks plain server-side HTTP requests with Cloudflare/403 responses. The monitor therefore uses Playwright with the Google Chrome browser already installed on GitHub's Ubuntu runners and loads AMC's official theatre pages as a real browser session.
+A sold-out future IMAX 70mm showing still makes the date qualify. Availability is not part of date detection, so a ticket or seat restock cannot create a false alert.
 
-If AMC serves a challenge page or a date cannot be checked reliably, that run is treated as unhealthy. It does **not** update the successful baseline and it does **not** send a "no new dates" conclusion.
+## Date-only state
 
-## Baseline behavior
+Version 7 stores:
 
-Version 6 uses a fresh date-only state schema.
+- initialized — whether a successful v7 baseline exists
+- ever_seen_dates — every qualifying date that has already been baselined or successfully alerted
+- pending_dates — newly detected dates whose ntfy delivery still needs to succeed
+- current_dates — qualifying dates found on the latest complete scan
+- health_error — the most recent scan/delivery problem
+- last_attempt_at — most recent attempted run
+- last_success_at — most recent complete successful scan
+- source — current live source
 
-The first completely successful run after this rewrite is intentionally silent. It records all currently listed qualifying future dates as the baseline so existing listings do not generate false "new date" alerts.
+Once a date enters ever_seen_dates, it stays known. That is what makes extra times, restocks, disappearance, and reappearance silent.
 
-After that:
+## Baseline and failures
 
-1. Each successful run scans the next 21 calendar days.
-2. It builds the set of qualifying Odyssey IMAX 70mm dates.
-3. It compares that set with ever_seen_dates.
-4. Only dates never seen before are sent to ntfy.
-5. Once successfully notified, a date remains permanently known, so changes on that date never alert again.
+The first completely successful run after a rewrite is intentionally silent. It records every currently listed qualifying future date as the baseline so existing listings are not mistaken for newly added dates.
 
-Notification failures are retained in pending_dates and retried while that date is still listed.
+A partial or failed sweep is never treated as an empty result. If any requested day cannot be read reliably, the run records a health warning and leaves the successful comparison baseline intact.
+
+If an ntfy delivery fails, the new date remains in pending_dates and is retried while that date is still listed.
 
 ## Schedule
 
-.github/workflows/watch.yml requests a run about every five minutes. GitHub Actions schedules are not guaranteed to start at the exact requested minute.
+The workflow requests a run about every five minutes and scans the next 21 future calendar dates in Los Angeles time. GitHub Actions schedules can start later than the requested minute.
 
-The workflow runs the unit tests before the live AMC check and writes state changes back to state.json.
+Code changes also trigger the workflow immediately for validation. State-only commits do not retrigger it.
 
-## State fields
+The workflow runs unit tests before the live scan and writes state changes back to state.json.
 
-- initialized — whether a successful v6 baseline exists
-- ever_seen_dates — every qualifying date already baselined or successfully alerted
-- pending_dates — newly detected dates whose ntfy delivery has not yet succeeded
-- current_dates — qualifying dates found on the latest successful scan
-- health_error — most recent live-check or notification problem
-- last_attempt_at — most recent attempted run
-- last_success_at — most recent complete AMC scan
+## Current verified baseline
+
+The first successful v7 live scan on October 8, 2026 found qualifying Odyssey IMAX 70mm listings on:
+
+- October 9, 2026
+- October 10, 2026
+- October 11, 2026
+- October 12, 2026
+- October 13, 2026
+- October 14, 2026
+
+Each currently had 2:00 PM, 6:00 PM, and 10:00 PM listings. These dates are now baseline dates and will not alert merely because their times or availability change.
+
+The next alert should happen only when a qualifying future calendar date appears that is not already in ever_seen_dates.
 
 ## Phone notifications
 
-The repository uses the existing NTFY_TOPIC GitHub Actions secret. Subscribe to that private topic in the ntfy app.
+The repository uses the existing NTFY_TOPIC GitHub Actions secret.
 
-A valid notification contains the new calendar date, the currently listed qualifying showtime(s), and an AMC showtime link when one is available.
+A valid alert contains the new calendar date, all currently listed qualifying showtimes on that date, and the Fandango ticketing link when available.
 
 This bot does not log in, reserve seats, or purchase tickets.
