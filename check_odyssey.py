@@ -3,44 +3,44 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from urllib.parse import urljoin
 from zoneinfo import ZoneInfo
 
 import requests
-from bs4 import BeautifulSoup
 
 STATE_PATH = Path("state.json")
-STATE_VERSION = 6
+STATE_VERSION = 7
 PACIFIC = ZoneInfo("America/Los_Angeles")
 DAYS_AHEAD = int(os.getenv("DAYS_AHEAD", "21"))
+REQUEST_DELAY = float(os.getenv("REQUEST_DELAY", "0.20"))
 NTFY_TOPIC = os.getenv("NTFY_TOPIC", "").strip()
 NTFY_SERVER = os.getenv("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
-AMC_BROWSER_CHANNEL = os.getenv("AMC_BROWSER_CHANNEL", "chrome").strip() or "chrome"
-AMC_NAV_TIMEOUT_MS = int(os.getenv("AMC_NAV_TIMEOUT_MS", "30000"))
-AMC_SETTLE_MS = int(os.getenv("AMC_SETTLE_MS", "3000"))
 
-THEATRE_URL = (
+# Universal Cinema AMC at CityWalk Hollywood on Fandango.
+# Fandango's theater page is the ticketing fallback because AMC currently
+# challenges/blocks GitHub-hosted requests, including headless Chrome.
+FANDANGO_THEATER_ID = "AAAWX"
+FANDANGO_CHAIN = "AMC"
+FANDANGO_SLUG = "universal-cinema-amc-at-citywalk-hollywood-aaawx"
+FANDANGO_PAGE = f"https://www.fandango.com/{FANDANGO_SLUG}/theater-page"
+FANDANGO_API = (
+    "https://www.fandango.com/napi/theaterMovieShowtimes/"
+    f"{FANDANGO_THEATER_ID}"
+)
+AMC_THEATRE_URL = (
     "https://www.amctheatres.com/movie-theatres/los-angeles/"
     "universal-cinema-amc-at-citywalk-hollywood/showtimes"
 )
-CANONICAL_THEATRE_URL = THEATRE_URL
-SHOWTIME_LINK_RE = re.compile(r"/showtimes/(\d+)(?:(?:/(?:seats|tickets))?(?:[?#]|$))", re.I)
-TIME_RE = re.compile(r"\b(\d{1,2}:\d{2}\s*(?:am|pm))\b", re.I)
+
+UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/151.0.0.0 Safari/537.36"
+)
 ODYSSEY_RE = re.compile(r"\bthe\s+odyssey\b", re.I)
 IMAX_70_RE = re.compile(r"\bimax(?:®|\(r\))?\s*70\s*mm\b", re.I)
-BLOCK_PAGE_MARKERS = (
-    "global safety net",
-    "access denied",
-    "verify you are human",
-    "checking your browser",
-    "attention required",
-)
-
-
-def norm(text: str) -> str:
-    return " ".join((text or "").replace("\xa0", " ").split()).lower()
 
 
 def default_state() -> dict:
@@ -53,6 +53,7 @@ def default_state() -> dict:
         "health_error": "",
         "last_attempt_at": None,
         "last_success_at": None,
+        "source": "fandango",
     }
 
 
@@ -65,11 +66,15 @@ def load_state() -> dict:
 
 def save_state(state: dict) -> None:
     temporary = STATE_PATH.with_suffix(".tmp")
-    temporary.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.write_text(
+        json.dumps(state, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     temporary.replace(STATE_PATH)
 
 
 def legacy_seen_dates(state: dict) -> set[str]:
+    """Carry forward any dates known by older state schemas."""
     dates = set(state.get("ever_seen_dates") or [])
     dates.update(state.get("seen_dates") or [])
     legacy_showings = state.get("showings") or state.get("active") or state.get("seen") or {}
@@ -80,230 +85,204 @@ def legacy_seen_dates(state: dict) -> set[str]:
     return dates
 
 
-def page_is_real_amc_theatre_page(text: str) -> bool:
-    low = norm(text)
-    if any(marker in low for marker in BLOCK_PAGE_MARKERS):
-        return False
-    return "universal cinema" in low and "citywalk" in low
+def fandango_page_url(show_date: date | str) -> str:
+    d = show_date.isoformat() if isinstance(show_date, date) else str(show_date)
+    return f"{FANDANGO_PAGE}?format=IMAX+70MM&date={d}"
 
 
-def local_showtime_text(a) -> str:
-    best = " ".join(a.stripped_strings)
-    node = a
-    for _ in range(5):
-        node = getattr(node, "parent", None)
-        if node is None:
-            break
-        text = " ".join(getattr(node, "stripped_strings", []))
-        if len(text) > 1800:
-            break
-        if TIME_RE.search(text):
-            best = text
-    return best
+def fetch_day(session: requests.Session, show_date: date) -> dict:
+    d = show_date.isoformat()
+    response = session.get(
+        FANDANGO_API,
+        params={
+            "chainCode": FANDANGO_CHAIN,
+            "startDate": d,
+            "isdesktop": "true",
+            "partnerRestrictedTicketing": "",
+        },
+        headers={
+            "User-Agent": UA,
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "X-Requested-With": "XMLHttpRequest",
+            "Referer": fandango_page_url(d),
+        },
+        timeout=25,
+    )
+    response.raise_for_status()
+    data = response.json()
+
+    view_model = data.get("viewModel")
+    if not isinstance(view_model, dict):
+        raise RuntimeError("Fandango response did not contain viewModel")
+
+    details = ((view_model.get("theater") or {}).get("details") or {})
+    returned_id = str(details.get("id") or "").upper()
+    returned_chain = str(details.get("chainCode") or "").upper()
+    returned_name = str(details.get("name") or "")
+
+    if returned_id != FANDANGO_THEATER_ID:
+        raise RuntimeError(
+            f"Fandango returned unexpected theater id {returned_id!r}"
+        )
+    if returned_chain and returned_chain != FANDANGO_CHAIN:
+        raise RuntimeError(
+            f"Fandango returned unexpected theater chain {returned_chain!r}"
+        )
+    if "universal" not in returned_name.lower() or "citywalk" not in returned_name.lower():
+        raise RuntimeError(
+            f"Fandango returned unexpected theater name {returned_name!r}"
+        )
+
+    movies = view_model.get("movies")
+    if movies is None:
+        raise RuntimeError("Fandango response did not contain movies")
+    if not isinstance(movies, list):
+        raise RuntimeError("Fandango movies field was not a list")
+
+    return view_model
 
 
-GENERIC_HEADING_WORDS = (
-    "imax", "70mm", "70 mm", "showtime", "reserved seating",
-    "closed caption", "audio description", "assistive listening",
-)
+def _show_is_imax_70mm(show: dict, group: dict) -> bool:
+    """Require an explicit IMAX-70mm marker, never plain IMAX or plain 70mm."""
+    formats = [
+        str(item.get("filterName") or "")
+        for item in (show.get("filmFormat") or [])
+        if isinstance(item, dict)
+    ]
+    if formats:
+        return any(IMAX_70_RE.search(value) for value in formats)
+
+    # Older/alternate Fandango payloads may express the same format as an
+    # amenity instead of per-showtime filmFormat. Only use this fallback when
+    # filmFormat is absent, and require IMAX + 70mm in the same amenity group.
+    amenity_names = [
+        str(item.get("name") or "")
+        for item in (group.get("amenities") or [])
+        if isinstance(item, dict)
+    ]
+    joined = " ".join(amenity_names)
+    return bool(IMAX_70_RE.search(joined))
 
 
-def context_is_single_odyssey_group(node) -> bool:
-    headings = [norm(h.get_text(" ", strip=True)) for h in node.find_all(re.compile(r"^h[1-6]$"))]
-    if not headings:
-        return True
-    has_odyssey_heading = any(ODYSSEY_RE.search(h) for h in headings)
-    if not has_odyssey_heading:
-        return True
-    for heading in headings:
-        if ODYSSEY_RE.search(heading):
-            continue
-        if any(word in heading for word in GENERIC_HEADING_WORDS):
-            continue
-        # A second non-format heading usually means we climbed into a container
-        # holding another movie card. Fail closed instead of mixing evidence.
-        return False
-    return True
+def extract_matching_showtimes(view_model: dict, show_date: date) -> list[dict]:
+    """Return Odyssey IMAX 70mm showtimes for exactly one requested date.
 
-
-def smallest_matching_context(a) -> str | None:
-    """Return the smallest nearby DOM context proving Odyssey + IMAX 70mm."""
-    node = a
-    for _ in range(12):
-        node = getattr(node, "parent", None)
-        if node is None or getattr(node, "name", None) in {"body", "html"}:
-            break
-        text = " ".join(getattr(node, "stripped_strings", []))
-        if len(text) > 5000:
-            break
-        if ODYSSEY_RE.search(text) and IMAX_70_RE.search(text):
-            if context_is_single_odyssey_group(node):
-                return text
-            return None
-    return None
-
-
-def page_has_odyssey_imax70_signal(soup: BeautifulSoup) -> bool:
-    for text_node in soup.find_all(string=ODYSSEY_RE):
-        node = getattr(text_node, "parent", None)
-        for _ in range(10):
-            if node is None or getattr(node, "name", None) in {"body", "html"}:
-                break
-            text = " ".join(getattr(node, "stripped_strings", []))
-            if len(text) > 6000:
-                break
-            if IMAX_70_RE.search(text) and TIME_RE.search(text):
-                return context_is_single_odyssey_group(node)
-            node = getattr(node, "parent", None)
-    return False
-
-
-def parse_listing_page(html: str, show_date: date) -> tuple[list[dict], int, bool]:
-    soup = BeautifulSoup(html, "html.parser")
+    Sold-out listings still count. Availability is deliberately not part of
+    date detection, so restocks/status changes cannot create an alert.
+    """
+    wanted_date = show_date.isoformat()
     found: dict[str, dict] = {}
-    generic_ids: set[str] = set()
 
-    for a in soup.find_all("a", href=True):
-        href = a.get("href", "")
-        match = SHOWTIME_LINK_RE.search(href)
-        if not match:
+    for movie in view_model.get("movies") or []:
+        if not isinstance(movie, dict):
+            continue
+        if not ODYSSEY_RE.search(str(movie.get("title") or "")):
             continue
 
-        sid = match.group(1)
-        generic_ids.add(sid)
-        if not smallest_matching_context(a):
-            continue
+        for variant in movie.get("variants") or []:
+            if not isinstance(variant, dict):
+                continue
+            for group in variant.get("amenityGroups") or []:
+                if not isinstance(group, dict):
+                    continue
+                for show in group.get("showtimes") or []:
+                    if not isinstance(show, dict):
+                        continue
+                    if not _show_is_imax_70mm(show, group):
+                        continue
 
-        one_showtime_text = local_showtime_text(a)
-        tm = TIME_RE.search(" ".join(a.stripped_strings)) or TIME_RE.search(one_showtime_text)
-        display_time = tm.group(1).upper().replace(" ", "") if tm else "time listed on AMC"
-        showing_url = urljoin(CANONICAL_THEATRE_URL, href.split("?")[0])
-        found[sid] = {
-            "date": show_date.isoformat(),
-            "time": display_time,
-            "showtime_id": sid,
-            "url": showing_url,
-        }
+                    # The API is queried one date at a time, but filter by
+                    # ticketingDate too if Fandango happens to return spillover.
+                    ticketing_date = str(show.get("ticketingDate") or "")
+                    if re.match(r"^\d{4}-\d{2}-\d{2}", ticketing_date):
+                        if ticketing_date[:10] != wanted_date:
+                            continue
 
-    return list(found.values()), len(generic_ids), page_has_odyssey_imax70_signal(soup)
+                    # Future date listings count even when sold out. The only
+                    # things excluded are explicitly past/expired performances.
+                    status = str(show.get("type") or "").lower()
+                    if status == "pastshowtime" or bool(show.get("expired")):
+                        continue
 
+                    time_label = str(show.get("date") or "").strip()
+                    if not time_label and "+" in ticketing_date:
+                        time_label = ticketing_date.split("+", 1)[1]
 
-class AMCBrowser:
-    """Load AMC's official pages with the Chrome browser installed on GitHub runners."""
+                    unique = (
+                        ticketing_date
+                        or str(show.get("showtimeHashCode") or "")
+                        or str(show.get("id") or "")
+                        or time_label
+                    )
+                    if not unique:
+                        continue
 
-    def __init__(self) -> None:
-        self._playwright = None
-        self._browser = None
-        self._context = None
-        self._page = None
+                    found[unique] = {
+                        "date": wanted_date,
+                        "time": time_label or "time listed",
+                        "status": status or "unknown",
+                        "url": str(show.get("ticketingJumpPageURL") or fandango_page_url(wanted_date)),
+                        "source": "Fandango",
+                    }
 
-    def __enter__(self) -> "AMCBrowser":
-        from playwright.sync_api import sync_playwright
-
-        self._playwright = sync_playwright().start()
-        launch_args = {
-            "headless": True,
-            "args": [
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-blink-features=AutomationControlled",
-            ],
-        }
-        if AMC_BROWSER_CHANNEL:
-            launch_args["channel"] = AMC_BROWSER_CHANNEL
-        self._browser = self._playwright.chromium.launch(**launch_args)
-        self._context = self._browser.new_context(
-            locale="en-US",
-            timezone_id="America/Los_Angeles",
-            viewport={"width": 1365, "height": 1100},
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/151.0.0.0 Safari/537.36"
-            ),
-        )
-        self._context.add_init_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
-        )
-        self._page = self._context.new_page()
-        return self
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        if self._context is not None:
-            self._context.close()
-        if self._browser is not None:
-            self._browser.close()
-        if self._playwright is not None:
-            self._playwright.stop()
-
-    def _load(self, url: str) -> str:
-        last_problem = ""
-        for attempt in range(2):
-            try:
-                self._page.goto(url, wait_until="domcontentloaded", timeout=AMC_NAV_TIMEOUT_MS)
-                self._page.wait_for_timeout(AMC_SETTLE_MS + attempt * 2000)
-                body = self._page.locator("body").inner_text(timeout=5000)
-                html = self._page.content()
-                if page_is_real_amc_theatre_page(body):
-                    return html
-                last_problem = f"AMC returned a challenge/non-theatre page ({len(body)} chars)"
-            except Exception as exc:
-                last_problem = f"{type(exc).__name__}: {exc}"
-        raise RuntimeError(last_problem or "AMC page did not load")
-
-    def fetch_date(self, show_date: date) -> tuple[list[dict], int, bool]:
-        url = f"{THEATRE_URL}?date={show_date.isoformat()}&premium-offering=imax"
-        html = self._load(url)
-        return parse_listing_page(html, show_date)
+    return list(found.values())
 
 
-def scan_future_dates(browser: AMCBrowser, today: date) -> dict[str, list[dict]]:
+def scan_future_dates(session: requests.Session, today: date) -> dict[str, list[dict]]:
     showings_by_date: dict[str, list[dict]] = {}
 
     for offset in range(1, DAYS_AHEAD + 1):
         d = today + timedelta(days=offset)
         try:
-            items, generic_count, signal = browser.fetch_date(d)
+            view_model = fetch_day(session, d)
         except Exception as exc:
-            # A browser/navigation failure usually means AMC blocked the source,
-            # not that one calendar date is special. Abort immediately so a blocked
-            # run never spends minutes hammering every date and never changes state.
-            raise RuntimeError(f"{d}: {type(exc).__name__}: {exc}") from exc
-
-        if signal and not items:
+            # A partial sweep is not a trustworthy date snapshot. Abort without
+            # modifying the successful baseline.
             raise RuntimeError(
-                f"{d}: AMC page contains Odyssey + IMAX 70mm + showtime text, "
-                "but no matching AMC showtime link was parsed"
-            )
+                f"{d}: {type(exc).__name__}: {exc}"
+            ) from exc
 
+        items = extract_matching_showtimes(view_model, d)
         if items:
             showings_by_date[d.isoformat()] = items
             times = ", ".join(sorted(item["time"] for item in items))
             print(f"{d}: Odyssey IMAX 70mm — {times}")
         else:
-            print(f"{d}: no Odyssey IMAX 70mm ({generic_count} AMC showtime links on page)")
+            print(f"{d}: no Odyssey IMAX 70mm")
+
+        if REQUEST_DELAY > 0 and offset != DAYS_AHEAD:
+            time.sleep(REQUEST_DELAY)
 
     return showings_by_date
 
 
-def send_new_date_notification(new_dates: list[str], showings_by_date: dict[str, list[dict]]) -> None:
+def send_new_date_notification(
+    new_dates: list[str],
+    showings_by_date: dict[str, list[dict]],
+) -> None:
     if not NTFY_TOPIC:
         raise RuntimeError("GitHub secret NTFY_TOPIC is not configured")
 
     lines: list[str] = []
-    click = CANONICAL_THEATRE_URL
+    click = AMC_THEATRE_URL
+
     for date_string in sorted(new_dates):
-        items = sorted(showings_by_date.get(date_string, []), key=lambda item: item["time"])
-        times = ", ".join(item["time"] for item in items) or "showtimes listed on AMC"
+        items = sorted(
+            showings_by_date.get(date_string, []),
+            key=lambda item: item["time"],
+        )
+        times = ", ".join(item["time"] for item in items) or "showtimes listed"
         lines.append(f"{date_string} — {times}")
-        if items and click == CANONICAL_THEATRE_URL:
+        if items and click == AMC_THEATRE_URL:
             click = items[0]["url"]
 
     response = requests.post(
         f"{NTFY_SERVER}/{NTFY_TOPIC}",
         data=(
-            "AMC added The Odyssey IMAX 70mm on a NEW FUTURE DATE at Universal CityWalk:\n"
+            "NEW The Odyssey IMAX 70mm DATE at Universal CityWalk:\n"
             + "\n".join(lines)
+            + "\n\nDate-only alert: added times/restocks on known dates are ignored."
         ).encode("utf-8"),
         headers={
             "Title": "NEW Odyssey IMAX 70mm date",
@@ -320,16 +299,23 @@ def main() -> int:
     now = datetime.now(PACIFIC)
     today = now.date()
     state = load_state()
-    migration_baseline = state.get("version") != STATE_VERSION or not state.get("initialized", False)
-    ever_seen = legacy_seen_dates(state)
-    pending = set(state.get("pending_dates") or [])
-    pending = {d for d in pending if d > today.isoformat()}
 
+    migration_baseline = (
+        state.get("version") != STATE_VERSION
+        or not state.get("initialized", False)
+    )
+    ever_seen = legacy_seen_dates(state)
+    pending = {
+        d
+        for d in set(state.get("pending_dates") or [])
+        if d > today.isoformat()
+    }
+
+    session = requests.Session()
     try:
-        with AMCBrowser() as browser:
-            showings_by_date = scan_future_dates(browser, today)
+        showings_by_date = scan_future_dates(session, today)
     except Exception as exc:
-        health_error = f"AMC browser scan failed: {type(exc).__name__}: {exc}"
+        health_error = f"Fandango scan failed: {type(exc).__name__}: {exc}"
         print(f"HEALTH WARNING: {health_error}")
         state.update({
             "version": STATE_VERSION,
@@ -338,18 +324,21 @@ def main() -> int:
             "pending_dates": sorted(pending),
             "health_error": health_error,
             "last_attempt_at": now.isoformat(),
+            "source": "fandango",
         })
         save_state(state)
         if os.getenv("GITHUB_STEP_SUMMARY"):
             with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as report:
-                report.write("### Odyssey date monitor: WARNING\nAMC could not be scanned reliably; no baseline or alert state was changed.\n")
+                report.write(
+                    "### Odyssey date monitor: WARNING\n"
+                    "Fandango could not be scanned reliably; "
+                    "no baseline or alert state was changed.\n"
+                )
         return 2
 
     current_dates = set(showings_by_date)
 
     if migration_baseline:
-        # A rewrite/recovery run is deliberately silent. Establish a clean snapshot so
-        # already-existing listings do not produce a false "new date" notification.
         ever_seen.update(current_dates)
         pending.clear()
         state = {
@@ -361,17 +350,21 @@ def main() -> int:
             "health_error": "",
             "last_attempt_at": now.isoformat(),
             "last_success_at": now.isoformat(),
+            "source": "fandango",
         }
         save_state(state)
-        print(f"V{STATE_VERSION} silent baseline complete: {len(current_dates)} qualifying future date(s).")
+        print(
+            f"V{STATE_VERSION} silent baseline complete: "
+            f"{len(current_dates)} qualifying future date(s)."
+        )
         return 0
 
     new_dates = current_dates - ever_seen
     pending.update(new_dates)
     deliverable = sorted(pending & current_dates)
 
-    # Dates already known on a successful scan stay known forever. This is what makes
-    # added times, sold-out changes, disappearance, and later reappearance silent.
+    # Every successfully observed/alerted date remains known forever. That makes
+    # extra times, availability changes, disappearance, and reappearance silent.
     ever_seen.update(current_dates - set(deliverable))
 
     if deliverable:
@@ -379,7 +372,10 @@ def main() -> int:
             send_new_date_notification(deliverable, showings_by_date)
         except Exception as exc:
             health_error = f"notification delivery failed ({type(exc).__name__})"
-            print(f"HEALTH WARNING: {health_error}; retaining {len(deliverable)} pending date(s).")
+            print(
+                f"HEALTH WARNING: {health_error}; "
+                f"retaining {len(deliverable)} pending date(s)."
+            )
             state = {
                 "version": STATE_VERSION,
                 "initialized": True,
@@ -389,13 +385,17 @@ def main() -> int:
                 "health_error": health_error,
                 "last_attempt_at": now.isoformat(),
                 "last_success_at": now.isoformat(),
+                "source": "fandango",
             }
             save_state(state)
             return 2
         else:
             ever_seen.update(deliverable)
             pending.difference_update(deliverable)
-            print(f"Sent alert for {len(deliverable)} brand-new future date(s).")
+            print(
+                f"Sent alert for {len(deliverable)} "
+                "brand-new future date(s)."
+            )
 
     state = {
         "version": STATE_VERSION,
@@ -406,6 +406,7 @@ def main() -> int:
         "health_error": "",
         "last_attempt_at": now.isoformat(),
         "last_success_at": now.isoformat(),
+        "source": "fandango",
     }
     save_state(state)
 
@@ -418,8 +419,8 @@ def main() -> int:
             )
 
     print(
-        f"Successful date-only scan: {len(current_dates)} current qualifying date(s); "
-        f"{len(deliverable)} new date(s)."
+        f"Successful date-only scan: {len(current_dates)} "
+        f"current qualifying date(s); {len(deliverable)} new date(s)."
     )
     return 0
 
