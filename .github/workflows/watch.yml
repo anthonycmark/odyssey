@@ -15,7 +15,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 8
 
     steps:
       - name: Check out repository
@@ -32,13 +32,19 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Test date detection and notification retries
+      - name: Verify Chrome
+        run: google-chrome --version
+
+      - name: Test date-only detection and retries
         run: python -m unittest -v
 
       - name: Check AMC
         env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOPIC: \${{ secrets.NTFY_TOPIC }}
           DAYS_AHEAD: "21"
+          AMC_BROWSER_CHANNEL: "chrome"
+          AMC_NAV_TIMEOUT_MS: "30000"
+          AMC_SETTLE_MS: "3000"
         shell: bash
         run: |
           set +e
