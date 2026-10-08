@@ -1,3 +1,1 @@
-beautifulsoup4==4.13.4
 requests==2.32.5
-playwright>=1.50,<2
