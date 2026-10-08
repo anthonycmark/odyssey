@@ -1,10 +1,24 @@
 {
-  "current_dates": [],
-  "ever_seen_dates": [],
-  "health_error": "Fandango scan failed: RuntimeError: 2026-10-09: RuntimeError: Fandango returned unexpected theater name 'Universal Cinema, an AMC Theatre'",
-  "initialized": false,
-  "last_attempt_at": "2026-10-08T00:24:41.236287-07:00",
-  "last_success_at": null,
+  "current_dates": [
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11",
+    "2026-10-12",
+    "2026-10-13",
+    "2026-10-14"
+  ],
+  "ever_seen_dates": [
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11",
+    "2026-10-12",
+    "2026-10-13",
+    "2026-10-14"
+  ],
+  "health_error": "",
+  "initialized": true,
+  "last_attempt_at": "2026-10-08T00:25:36.753151-07:00",
+  "last_success_at": "2026-10-08T00:25:36.753151-07:00",
   "pending_dates": [],
   "source": "fandango",
   "version": 7
