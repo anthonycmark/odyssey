@@ -129,7 +129,7 @@ def fetch_day(session: requests.Session, show_date: date) -> dict:
         raise RuntimeError(
             f"Fandango returned unexpected theater chain {returned_chain!r}"
         )
-    if "universal" not in returned_name.lower() or "citywalk" not in returned_name.lower():
+    if "universal cinema" not in returned_name.lower():
         raise RuntimeError(
             f"Fandango returned unexpected theater name {returned_name!r}"
         )
