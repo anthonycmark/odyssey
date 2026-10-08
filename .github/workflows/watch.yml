@@ -23,7 +23,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
 
     steps:
       - name: Check out repository
@@ -45,26 +45,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Verify Chrome
-        run: google-chrome --version
-
       - name: Test date-only detection and retries
         run: python -m unittest -v
 
-      - name: Check AMC
+      - name: Check CityWalk showtime feed
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           DAYS_AHEAD: "21"
-          AMC_BROWSER_CHANNEL: "chrome"
-          AMC_NAV_TIMEOUT_MS: "20000"
-          AMC_SETTLE_MS: "2500"
+          REQUEST_DELAY: "0.20"
         shell: bash
         run: |
           set +e
           python check_odyssey.py
           code=$?
           if [ "$code" -eq 2 ]; then
-            echo "AMC health warning logged; keeping workflow successful to avoid repeated failure emails."
+            echo "Showtime-feed health warning logged; keeping workflow successful to avoid repeated failure emails."
             exit 0
           fi
           exit "$code"
