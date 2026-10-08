@@ -4,6 +4,14 @@ on:
   schedule:
     - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "check_odyssey.py"
+      - "test_check_odyssey.py"
+      - "requirements.txt"
+      - ".github/workflows/watch.yml"
 
 permissions:
   contents: write
