@@ -259,22 +259,22 @@ class AMCBrowser:
 
 def scan_future_dates(browser: AMCBrowser, today: date) -> dict[str, list[dict]]:
     showings_by_date: dict[str, list[dict]] = {}
-    problems: list[str] = []
 
     for offset in range(1, DAYS_AHEAD + 1):
         d = today + timedelta(days=offset)
         try:
             items, generic_count, signal = browser.fetch_date(d)
         except Exception as exc:
-            problems.append(f"{d}: {type(exc).__name__}: {exc}")
-            continue
+            # A browser/navigation failure usually means AMC blocked the source,
+            # not that one calendar date is special. Abort immediately so a blocked
+            # run never spends minutes hammering every date and never changes state.
+            raise RuntimeError(f"{d}: {type(exc).__name__}: {exc}") from exc
 
         if signal and not items:
-            problems.append(
+            raise RuntimeError(
                 f"{d}: AMC page contains Odyssey + IMAX 70mm + showtime text, "
                 "but no matching AMC showtime link was parsed"
             )
-            continue
 
         if items:
             showings_by_date[d.isoformat()] = items
@@ -282,12 +282,6 @@ def scan_future_dates(browser: AMCBrowser, today: date) -> dict[str, list[dict]]
             print(f"{d}: Odyssey IMAX 70mm — {times}")
         else:
             print(f"{d}: no Odyssey IMAX 70mm ({generic_count} AMC showtime links on page)")
-
-    if problems:
-        preview = " | ".join(problems[:4])
-        if len(problems) > 4:
-            preview += f" | ... and {len(problems) - 4} more"
-        raise RuntimeError(f"incomplete AMC scan: {preview}")
 
     return showings_by_date
 
