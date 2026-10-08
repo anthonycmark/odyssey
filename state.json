@@ -3,7 +3,7 @@
   "ever_seen_dates": [],
   "health_error": "AMC browser scan failed: RuntimeError: 2026-10-09: RuntimeError: AMC returned a challenge/non-theatre page (4017 chars)",
   "initialized": false,
-  "last_attempt_at": "2026-10-08T00:16:49.523136-07:00",
+  "last_attempt_at": "2026-10-08T00:17:30.473131-07:00",
   "last_success_at": null,
   "pending_dates": [],
   "version": 6
