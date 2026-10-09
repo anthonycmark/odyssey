@@ -1,6 +1,5 @@
 {
   "current_dates": [
-    "2026-10-09",
     "2026-10-10",
     "2026-10-11",
     "2026-10-12",
@@ -17,8 +16,8 @@
   ],
   "health_error": "",
   "initialized": true,
-  "last_attempt_at": "2026-10-08T23:35:09.736054-07:00",
-  "last_success_at": "2026-10-08T23:35:09.736054-07:00",
+  "last_attempt_at": "2026-10-09T06:45:03.033144-07:00",
+  "last_success_at": "2026-10-09T06:45:03.033144-07:00",
   "pending_dates": [],
   "source": "fandango",
   "version": 7
