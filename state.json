@@ -8,9 +8,9 @@
     "2026-10-13",
     "2026-10-14"
   ],
-  "health_error": "",
+  "health_error": "Fandango scan failed: RuntimeError: 2026-11-04: JSONDecodeError: Expecting value: line 1 column 1 (char 0)",
   "initialized": true,
-  "last_attempt_at": "2026-11-02T17:44:32.035993-08:00",
+  "last_attempt_at": "2026-11-03T00:39:14.683065-08:00",
   "last_success_at": "2026-11-02T17:44:32.035993-08:00",
   "pending_dates": [],
   "source": "fandango",
