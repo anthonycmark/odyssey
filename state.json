@@ -1,17 +1,20 @@
 {
-  "current_dates": [],
+  "current_dates": [
+    "2026-12-11"
+  ],
   "ever_seen_dates": [
     "2026-10-09",
     "2026-10-10",
     "2026-10-11",
     "2026-10-12",
     "2026-10-13",
-    "2026-10-14"
+    "2026-10-14",
+    "2026-12-11"
   ],
   "health_error": "",
   "initialized": true,
-  "last_attempt_at": "2026-11-19T21:49:38.853876-08:00",
-  "last_success_at": "2026-11-19T21:49:38.853876-08:00",
+  "last_attempt_at": "2026-11-20T06:34:35.568097-08:00",
+  "last_success_at": "2026-11-20T06:34:35.568097-08:00",
   "pending_dates": [],
   "source": "fandango",
   "version": 7
